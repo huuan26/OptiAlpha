@@ -21,7 +21,7 @@ In modern quantitative equity and multi-asset factor investing, the signal const
 ┌─────────────────────────────────────────────────────────────┐
 │ 1. OrthoQuant (Signal Pre-Processing & Clean-up)            │
 │    • Cross-Sectional Risk Neutralization (FWL via Thin QR)  │
-│    • Löwdin Symmetric Orthogonalization (F^T F = I_K)       │
+│    • Lowdin Symmetric Orthogonalization (F^T F = I_K)       │
 └─────────────────────────────────────────────────────────────┘
          │
          ▼  (Orthonormal Residual Factor Streams)
@@ -82,7 +82,7 @@ $$
 
 #### Theorem 1 (The OrthoQuant Closed-Form Connection)
 
-If factors $`\mathbf{\widetilde{F}}`$ are orthonormalized via **OrthoQuant**'s Löwdin Symmetric Orthogonalization ($`\mathbf{\widetilde{F}}^T \mathbf{\widetilde{F}} = \mathbf{I}_K`$), then the factor correlation matrix collapses to the identity matrix $`\mathbf{C} = \mathbf{I}_K`$. Consequently:
+If factors $`\mathbf{\widetilde{F}}`$ are orthonormalized via **OrthoQuant**'s Lowdin Symmetric Orthogonalization ($`\mathbf{\widetilde{F}}^T \mathbf{\widetilde{F}} = \mathbf{I}_K`$), then the factor correlation matrix collapses to the identity matrix $`\mathbf{C} = \mathbf{I}_K`$. Consequently:
 
 $$
 \mathbf{\Omega}_{\alpha} = \mathrm{diag}(\sigma_1^2, \dots, \sigma_K^2) \implies w_k^* = \frac{\mathrm{IC}_k}{\sigma_k^2} \qquad \text{(3)}
