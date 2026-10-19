@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optialpha"
+version = "0.1.0"
+description = "OptiAlpha: Convex Regularized Alpha Combination and Dynamic Multi-Factor Allocation Engine"
+readme = "README.md"
+authors = [
+    { name = "Phan Bùi Hữu Ân", email = "phanbuihuuan261103@gmail.com" }
+]
+license = { text = "MIT" }
+keywords = [
+    "quantitative-finance",
+    "alpha-research",
+    "factor-investing",
+    "alpha-combination",
+    "convex-optimization",
+    "fista",
+    "turnover-control",
+    "fundamental-law",
+    "shrinkage-covariance",
+    "portfolio-management"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Mathematics"
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "pandas>=2.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/huuan26/OptiAlpha"
+Repository = "https://github.com/huuan26/OptiAlpha"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["optialpha*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=optialpha --cov-report=term-missing"
