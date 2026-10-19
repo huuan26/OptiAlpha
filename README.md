@@ -6,7 +6,7 @@
 [![Coverage](https://img.shields.io/badge/coverage-99.6%25-brightgreen.svg)]()
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-> **OptiAlpha** is an institutional-grade Python framework for regularized multi-factor alpha combination, dynamic covariance shrinkage, and online signal allocation. It solves the multi-factor aggregation dilemma by trading off expected predictive Information Coefficients (IC), factor portfolio risk, $L_1$ turnover transaction costs, and factor concentration constraints via accelerated proximal gradient methods (FISTA).
+> **OptiAlpha** is an institutional-grade Python framework for regularized multi-factor alpha combination, dynamic covariance shrinkage, and online signal allocation. It solves the multi-factor aggregation dilemma by trading off expected predictive Information Coefficients (IC), factor portfolio risk, $`L_1`$ turnover transaction costs, and factor concentration constraints via accelerated proximal gradient methods (FISTA).
 
 ---
 
@@ -39,16 +39,36 @@ In modern quantitative equity and multi-asset factor investing, the signal const
 
 ---
 
+## Mathematical Notation Reference
+
+| Symbol | Type | Description |
+| :--- | :--- | :--- |
+| $`N \in \mathbb{N}`$ | Dimension | Number of assets in the universe ($`N \ge K`$) |
+| $`K \in \mathbb{N}`$ | Dimension | Number of candidate alpha factors |
+| $`T \in \mathbb{N}`$ | Dimension | Number of historical observation periods (trading days) |
+| $`\mathbf{F}_t \in \mathbb{R}^{N \times K}`$ | Matrix | Cross-sectional factor exposure matrix at time $`t`$ |
+| $`\mathbf{ic} \in \mathbb{R}^K`$ | Vector | Information Coefficient vector ($`\mathrm{Rank\ IC}`$) |
+| $`\mathbf{\Omega}_{\alpha} \in \mathbb{R}^{K \times K}`$ | Matrix | Factor covariance matrix |
+| $`\mathbf{w} \in \mathbb{R}^K`$ | Vector | Factor allocation weight vector |
+| $`\mathbf{w}_{\text{prev}} \in \mathbb{R}^K`$ | Vector | Previous rebalance weights for turnover control |
+| $`\gamma \ge 0`$ | Scalar | Risk aversion penalty on factor portfolio variance |
+| $`\lambda_{\text{turnover}} \ge 0`$ | Scalar | $`L_1`$ transaction cost penalty |
+| $`\lambda_2 \ge 0`$ | Scalar | $`L_2`$ ridge regularization parameter |
+| $`\lVert \cdot \rVert_1, \lVert \cdot \rVert_2`$ | Norms | Vector $`L_1`$ and $`L_2`$ norms |
+| $`\lVert \cdot \rVert_F`$ | Norm | Matrix Frobenius norm |
+
+---
+
 ## Mathematical Architecture & Theoretical Formulations
 
 ### 1. Fundamental Law of Active Management & Optimal Alpha Allocation
 
-Let $\mathbf{F}_t \in \mathbb{R}^{N \times K}$ be the cross-sectional factor exposure matrix for $N$ assets across $K$ candidate alpha factors at time $t$.  
-Let $\mathbf{r}_{t+1} \in \mathbb{R}^N$ be the forward asset returns.  
-Let $\mathbf{ic} = (\mathrm{IC}_1, \dots, \mathrm{IC}_K)^T \in \mathbb{R}^K$ denote the vector of historical or forecast Information Coefficients (Rank IC).  
-Let $\mathbf{\Omega}_{\alpha} \in \mathbb{R}^{K \times K}$ be the factor covariance matrix.
+Let $`\mathbf{F}_t \in \mathbb{R}^{N \times K}`$ be the cross-sectional factor exposure matrix for $`N`$ assets across $`K`$ candidate alpha factors at time $`t`$.  
+Let $`\mathbf{r}_{t+1} \in \mathbb{R}^N`$ be the forward asset returns.  
+Let $`\mathbf{ic} = (\mathrm{IC}_1, \dots, \mathrm{IC}_K)^T \in \mathbb{R}^K`$ denote the vector of forecast Information Coefficients ($`\mathrm{Rank\ IC}`$).  
+Let $`\mathbf{\Omega}_{\alpha} \in \mathbb{R}^{K \times K}`$ be the factor covariance matrix.
 
-According to the Fundamental Law of Active Management (Grinold & Kahn, 2000; Qian & Hua, 2004), the unconstrained weight vector $\mathbf{w}^*$ that maximizes the composite Information Ratio (IR) satisfies:
+According to the Fundamental Law of Active Management (Grinold & Kahn, 2000; Qian & Hua, 2004), the unconstrained weight vector $`\mathbf{w}^*`$ that maximizes the composite Information Ratio (IR) satisfies:
 
 $$
 \mathbf{w}^* = \mathbf{\Omega}_{\alpha}^{-1} \mathbf{ic} \qquad \text{(1)}
@@ -61,13 +81,14 @@ $$
 $$
 
 #### Theorem 1 (The OrthoQuant Closed-Form Connection)
-If factors $\mathbf{\widetilde{F}}$ are orthonormalized via **OrthoQuant**'s Löwdin Symmetric Orthogonalization ($\mathbf{\widetilde{F}}^T \mathbf{\widetilde{F}} = \mathbf{I}_K$), then the factor correlation matrix collapses to the identity matrix $\mathbf{C} = \mathbf{I}_K$. Consequently:
+
+If factors $`\mathbf{\widetilde{F}}`$ are orthonormalized via **OrthoQuant**'s Löwdin Symmetric Orthogonalization ($`\mathbf{\widetilde{F}}^T \mathbf{\widetilde{F}} = \mathbf{I}_K`$), then the factor correlation matrix collapses to the identity matrix $`\mathbf{C} = \mathbf{I}_K`$. Consequently:
 
 $$
 \mathbf{\Omega}_{\alpha} = \mathrm{diag}(\sigma_1^2, \dots, \sigma_K^2) \implies w_k^* = \frac{\mathrm{IC}_k}{\sigma_k^2} \qquad \text{(3)}
 $$
 
-*Proof:* Substituting $\mathbf{\Omega}_{\alpha} = \mathbf{D}_{\sigma^2}$ into Equation (1), $\mathbf{\Omega}_{\alpha}^{-1} = \mathbf{D}_{1/\sigma^2}$, yielding $w_k^* = \mathrm{IC}_k / \sigma_k^2$. Multicollinearity and ill-conditioned matrix inversion are completely eliminated. $\blacksquare$
+*Proof:* Substituting $`\mathbf{\Omega}_{\alpha} = \mathbf{D}_{\sigma^2}`$ into Equation (1), $`\mathbf{\Omega}_{\alpha}^{-1} = \mathbf{D}_{1/\sigma^2}`$, yielding $`w_k^* = \mathrm{IC}_k / \sigma_k^2`$. Multicollinearity and ill-conditioned matrix inversion are completely eliminated. $`\blacksquare`$
 
 ---
 
@@ -78,95 +99,104 @@ In practical portfolio management, factor allocations cannot change drastically 
 OptiAlpha formulates factor combination as a strictly convex optimization problem:
 
 $$
-\min_{\mathbf{w} \in \mathcal{W}} \quad \mathcal{L}(\mathbf{w}) = \underbrace{-\mathbf{ic}^T \mathbf{w}}_{\text{Predictive Return}} + \underbrace{\frac{\gamma}{2} \mathbf{w}^T \mathbf{\Omega}_{\alpha} \mathbf{w}}_{\text{Factor Risk Penalty}} + \underbrace{\lambda_{\text{turnover}} \|\mathbf{w} - \mathbf{w}_{\text{prev}}\|_1}_{\text{L1 Turnover Friction}} + \underbrace{\frac{\lambda_2}{2} \|\mathbf{w}\|_2^2}_{\text{L2 Ridge Shrinkage}} \qquad \text{(4)}
+\min_{\mathbf{w} \in \mathcal{W}} \quad \mathcal{L}(\mathbf{w}) = \underbrace{-\mathbf{ic}^T \mathbf{w}}_{\text{Predictive Return}} + \underbrace{\frac{\gamma}{2} \mathbf{w}^T \mathbf{\Omega}_{\alpha} \mathbf{w}}_{\text{Factor Risk Penalty}} + \underbrace{\lambda_{\text{turnover}} \lVert \mathbf{w} - \mathbf{w}_{\text{prev}} \rVert_1}_{\text{L1 Turnover Friction}} + \underbrace{\frac{\lambda_2}{2} \lVert \mathbf{w} \rVert_2^2}_{\text{L2 Ridge Shrinkage}} \qquad \text{(4)}
 $$
 
 subject to convex budget and box constraints:
 
 $$
-\mathcal{W} = \left\{ \mathbf{w} \in \mathbb{R}^K : l_k \le w_k \le u_k \; \forall k, \quad \sum_{k=1}^K w_k = s \right\} \qquad \text{(5)}
+\mathcal{W} = \lbrace \mathbf{w} \in \mathbb{R}^K : l_k \le w_k \le u_k \; \forall k, \quad \sum_{k=1}^K w_k = s \rbrace \qquad \text{(5)}
 $$
 
 where:
-- $\gamma \ge 0$: Risk aversion parameter penalizing factor portfolio volatility.
-- $\lambda_{\text{turnover}} \ge 0$: $L_1$ turnover penalty against prior allocation $\mathbf{w}_{\text{prev}}$.
-- $l_k, u_k$: Lower/upper bounds ($l_k = 0, u_k = 1$ enforces a long-only simplex $\Delta^K$).
+- $`\gamma \ge 0`$: Risk aversion parameter penalizing factor portfolio volatility.
+- $`\lambda_{\text{turnover}} \ge 0`$: $`L_1`$ turnover penalty against prior allocation $`\mathbf{w}_{\text{prev}}`$.
+- $`l_k, u_k`$: Lower/upper bounds ($`l_k = 0, u_k = 1`$ enforces a long-only simplex $`\Delta^K`$).
 
 ---
 
 ### 3. Accelerated Proximal Gradient Solver (FISTA)
 
-Because the $L_1$ turnover term $\|\mathbf{w} - \mathbf{w}_{\text{prev}}\|_1$ is non-smooth, classical gradient descent fails. OptiAlpha implements the **Fast Iterative Shrinkage-Thresholding Algorithm (FISTA)** (Beck & Teboulle, 2009) with $\mathcal{O}(1/k^2)$ optimal convergence rate:
+Because the $`L_1`$ turnover term $`\lVert \mathbf{w} - \mathbf{w}_{\text{prev}} \rVert_1`$ is non-smooth, classical gradient descent fails. OptiAlpha implements the **Fast Iterative Shrinkage-Thresholding Algorithm (FISTA)** (Beck & Teboulle, 2009) with $`\mathcal{O}(1/k^2)`$ optimal convergence rate:
 
-1. **Smooth Gradient Step:**
-   $$
-   \nabla f(\mathbf{y}^{(k)}) = -\mathbf{ic} + \gamma \mathbf{\Omega}_{\alpha} \mathbf{y}^{(k)} + \lambda_2 \mathbf{y}^{(k)}, \quad \mathbf{z}^{(k)} = \mathbf{y}^{(k)} - \frac{1}{L} \nabla f(\mathbf{y}^{(k)})
-   $$
-   where $L = \|\gamma \mathbf{\Omega}_{\alpha} + \lambda_2 \mathbf{I}\|_2$ is the exact Lipschitz constant.
+#### Step 1: Smooth Gradient Step
 
-2. **Shifted Soft-Thresholding ($L_1$ Proximal Operator):**
-   $$
-   \mathbf{v}^{(k)} = \mathbf{w}_{\text{prev}} + \mathrm{sign}(\mathbf{z}^{(k)} - \mathbf{w}_{\text{prev}}) \odot \max\left( |\mathbf{z}^{(k)} - \mathbf{w}_{\text{prev}}| - \frac{\lambda_{\text{turnover}}}{L}, \, 0 \right)
-   $$
+$$
+\nabla f(\mathbf{y}^{(k)}) = -\mathbf{ic} + \gamma \mathbf{\Omega}_{\alpha} \mathbf{y}^{(k)} + \lambda_2 \mathbf{y}^{(k)}, \quad \mathbf{z}^{(k)} = \mathbf{y}^{(k)} - \frac{1}{L} \nabla f(\mathbf{y}^{(k)})
+$$
 
-3. **Box-Constrained Simplex Projection:**
-   $$
-   \mathbf{w}^{(k+1)} = \Pi_{\mathcal{W}}(\mathbf{v}^{(k)}) = \mathrm{clip}(\mathbf{v}^{(k)} - \mu^*, \mathbf{l}, \mathbf{u})
-   $$
-   where dual parameter $\mu^*$ is solved via bisection such that $\sum w_i = s$.
+where $`L = \lVert \gamma \mathbf{\Omega}_{\alpha} + \lambda_2 \mathbf{I} \rVert_2`$ is the exact Lipschitz constant computed via spectral norm.
 
-4. **Nesterov Momentum Acceleration:**
-   $$
-   t_{k+1} = \frac{1 + \sqrt{1 + 4 t_k^2}}{2}, \quad \mathbf{y}^{(k+1)} = \mathbf{w}^{(k+1)} + \left(\frac{t_k - 1}{t_{k+1}}\right) (\mathbf{w}^{(k+1)} - \mathbf{w}^{(k)})
-   $$
+#### Step 2: Shifted Soft-Thresholding ($L_1$ Proximal Operator)
+
+$$
+\mathbf{v}^{(k)} = \mathbf{w}_{\text{prev}} + \mathrm{sign}(\mathbf{z}^{(k)} - \mathbf{w}_{\text{prev}}) \odot \max \left( \lvert \mathbf{z}^{(k)} - \mathbf{w}_{\text{prev}} \rvert - \frac{\lambda_{\text{turnover}}}{L}, \, 0 \right)
+$$
+
+#### Step 3: Box-Constrained Simplex Projection
+
+$$
+\mathbf{w}^{(k+1)} = \Pi_{\mathcal{W}}(\mathbf{v}^{(k)}) = \mathrm{clip}(\mathbf{v}^{(k)} - \mu^*, \mathbf{l}, \mathbf{u})
+$$
+
+where dual parameter $`\mu^*`$ is solved via bisection root finding such that $`\sum_{i=1}^K w_i = s`$.
+
+#### Step 4: Nesterov Momentum Acceleration
+
+$$
+t_{k+1} = \frac{1 + \sqrt{1 + 4 t_k^2}}{2}, \quad \mathbf{y}^{(k+1)} = \mathbf{w}^{(k+1)} + \left( \frac{t_k - 1}{t_{k+1}} \right) (\mathbf{w}^{(k+1)} - \mathbf{w}^{(k)})
+$$
 
 ---
 
 ### 4. Analytical Ledoit-Wolf Covariance Shrinkage
 
-Sample covariance matrices $\mathbf{S} = \frac{1}{T-1} \mathbf{X}^T \mathbf{X}$ are notoriously ill-conditioned when $T$ is small relative to factor count $K$. OptiAlpha computes the asymptotically optimal shrinkage intensity $\delta^* \in [0, 1]$ (Ledoit & Wolf, 2004):
+Sample covariance matrices $`\mathbf{S} = \frac{1}{T-1} \mathbf{X}^T \mathbf{X}`$ are notoriously ill-conditioned when $`T`$ is small relative to factor count $`K`$. OptiAlpha computes the asymptotically optimal shrinkage intensity $`\delta^* \in [0, 1]`$ (Ledoit & Wolf, 2004):
 
 $$
 \mathbf{\Sigma}^* = \delta^* \mathbf{T} + (1 - \delta^*) \mathbf{S} \qquad \text{(6)}
 $$
 
-- **Constant Correlation Target ($\mathbf{T}$):** Preserves individual sample variances $S_{ii}$ while shrinking cross-sectional correlations to the mean correlation $\bar{r} = \frac{2}{K(K-1)} \sum_{i < j} R_{ij}$.
+- **Constant Correlation Target ($`\mathbf{T}`$):** Preserves individual sample variances $`S_{ii}`$ while shrinking cross-sectional correlations to the mean correlation $`\bar{r} = \frac{2}{K(K-1)} \sum_{i < j} R_{ij}`$.
 - **Optimal Shrinkage Parameter:**
-  $$
-  \delta^* = \min\left(1, \, \max\left(0, \, \frac{\hat{\pi} - \hat{\rho}}{T \cdot \|\mathbf{S} - \mathbf{T}\|_F^2}\right)\right)
-  $$
+
+$$
+\delta^* = \min \left( 1, \, \max \left( 0, \, \frac{\hat{\pi} - \hat{\rho}}{T \cdot \lVert \mathbf{S} - \mathbf{T} \rVert_F^2} \right) \right)
+$$
 
 ---
 
 ### 5. Online Adaptive Allocation (Exponentiated Gradient)
 
-For real-time streaming environments, OptiAlpha provides an online multiplicative update rule (Freund & Schapire, 1997; Kivinen & Warmuth, 1997) guaranteeing sublinear regret $\mathcal{O}(\sqrt{T \ln K})$:
+For real-time streaming environments, OptiAlpha provides an online multiplicative update rule (Freund & Schapire, 1997; Kivinen & Warmuth, 1997) guaranteeing sublinear regret $`\mathcal{O}(\sqrt{T \ln K})`$:
 
 $$
 w_{k, t+1} = (1 - \varepsilon) \frac{w_{k, t} \exp(\eta \cdot \hat{r}_{k, t})}{\sum_{j=1}^K w_{j, t} \exp(\eta \cdot \hat{r}_{j, t})} + \frac{\varepsilon}{K} \qquad \text{(7)}
 $$
 
-where $\eta > 0$ is the learning rate and $\varepsilon \in [0, 1]$ prevents premature factor starvation.
+where $`\eta > 0`$ is the learning rate and $`\varepsilon \in [0, 1]`$ prevents premature factor starvation.
 
 ---
 
 ### 6. Risk Attribution & Diversification Metrics
 
 #### Euler's Risk Decomposition
-Total factor portfolio volatility $\sigma_p = \sqrt{\mathbf{w}^T \mathbf{\Omega}_{\alpha} \mathbf{w}}$ decomposes additively into Percentage Risk Contributions ($\mathrm{PRC}_k$):
+
+Total factor portfolio volatility $`\sigma_p = \sqrt{\mathbf{w}^T \mathbf{\Omega}_{\alpha} \mathbf{w}}`$ decomposes additively into Percentage Risk Contributions ($`\mathrm{PRC}_k`$):
 
 $$
 \mathrm{PRC}_k = \frac{w_k (\mathbf{\Omega}_{\alpha} \mathbf{w})_k}{\mathbf{w}^T \mathbf{\Omega}_{\alpha} \mathbf{w}}, \quad \sum_{k=1}^K \mathrm{PRC}_k = 1.0 \qquad \text{(8)}
 $$
 
 #### Effective Number of Alphas (ENF)
+
 Following Meucci (2009), the effective diversification entropy across alpha streams is:
 
 $$
-\mathrm{ENF} \triangleq \exp\left( -\sum_{k=1}^K p_k \ln p_k \right) \in [1, K] \qquad \text{(9)}
+\mathrm{ENF} \triangleq \exp \left( -\sum_{k=1}^K p_k \ln p_k \right) \in [1, K] \qquad \text{(9)}
 $$
 
-where $p_k = \max(\mathrm{PRC}_k, 0)$.
+where $`p_k = \max(\mathrm{PRC}_k, 0)`$.
 
 ---
 
@@ -174,11 +204,11 @@ where $p_k = \max(\mathrm{PRC}_k, 0)$.
 
 | Strategy | Objective Function | Turnover Control | Handles Multicollinearity | Optimal Solver |
 | :--- | :--- | :--- | :--- | :--- |
-| **Equal Weighting (1/K)** | Heuristic benchmark | None | Poor | Closed-form $\mathcal{O}(1)$ |
-| **IC-Weighted** | $w_k \propto \max(0, \mathrm{IC}_k)$ | None | Moderate | Closed-form $\mathcal{O}(K)$ |
-| **Grinold-Kahn Analytical** | $\mathbf{\Omega}^{-1} \mathbf{ic}$ | None | Requires Invertible $\mathbf{\Omega}$ | Linear Solve $\mathcal{O}(K^3)$ |
-| **OptiAlpha Convex (FISTA)** | $\min -\mathbf{ic}^T \mathbf{w} + \frac{\gamma}{2} \mathbf{w}^T \mathbf{\Omega} \mathbf{w} + \lambda \|\Delta \mathbf{w}\|_1$ | **Rigorous $L_1$ Penalty** | **Excellent (L2 Ridge + Ledoit-Wolf)** | **FISTA $\mathcal{O}(K \log K)$ per iter** |
-| **OptiAlpha Online (EG)** | Multiplicative Weights Online Regret | Adaptive Decay | Good | Online $\mathcal{O}(K)$ per step |
+| **Equal Weighting (1/K)** | Heuristic benchmark | None | Poor | Closed-form $`\mathcal{O}(1)`$ |
+| **IC-Weighted** | $`w_k \propto \max(0, \mathrm{IC}_k)`$ | None | Moderate | Closed-form $`\mathcal{O}(K)`$ |
+| **Grinold-Kahn Analytical** | $`\mathbf{\Omega}^{-1} \mathbf{ic}`$ | None | Requires Invertible $`\mathbf{\Omega}`$ | Linear Solve $`\mathcal{O}(K^3)`$ |
+| **OptiAlpha Convex (FISTA)** | $`\min -\mathbf{ic}^T \mathbf{w} + \frac{\gamma}{2} \mathbf{w}^T \mathbf{\Omega} \mathbf{w} + \lambda \lVert \Delta \mathbf{w} \rVert_1`$ | **Rigorous $`L_1`$ Penalty** | **Excellent (L2 Ridge + Ledoit-Wolf)** | **FISTA $`\mathcal{O}(K \log K)`$ per iter** |
+| **OptiAlpha Online (EG)** | Multiplicative Weights Online Regret | Adaptive Decay | Good | Online $`\mathcal{O}(K)`$ per step |
 
 ---
 
@@ -271,7 +301,7 @@ pytest
 2. **Qian, E. E., & Hua, R. H. (2004).** Active risk and information ratio in multi-factor models. *The Journal of Portfolio Management*, 30(3), 20–34.
 3. **Ledoit, O., & Wolf, M. (2004).** A well-conditioned estimator for large-dimensional covariance matrices. *Journal of Multivariate Analysis*, 88(2), 365–411.
 4. **Beck, A., & Teboulle, M. (2009).** A fast iterative shrinkage-thresholding algorithm for linear inverse problems. *SIAM Journal on Imaging Sciences*, 2(1), 183–202.
-5. **Duchi, J., Shalev-Shwartz, S., Singer, Y., & Chandra, T. (2008).** Efficient projections onto the $l_1$-ball for predictors in high dimensions. *ICML*, 272–279.
+5. **Duchi, J., Shalev-Shwartz, S., Singer, Y., & Chandra, T. (2008).** Efficient projections onto the $`l_1`$-ball for predictors in high dimensions. *ICML*, 272–279.
 6. **Meucci, A. (2009).** Managing diversification. *Risk*, 22(5), 74–79.
 7. **Choueifaty, Y., & Coignard, Y. (2008).** Toward maximum diversification. *The Journal of Portfolio Management*, 35(1), 40–51.
 8. **Freund, Y., & Schapire, R. E. (1997).** A decision-theoretic generalization of on-line learning and an application to boosting. *Journal of Computer and System Sciences*, 55(1), 119–139.
