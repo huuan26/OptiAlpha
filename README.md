@@ -285,6 +285,42 @@ print(f"Effective Number of Alphas (ENF): {enf:.2f} / 5.00")
 
 ---
 
+## Polars & `polars-anta` Walk-Forward Allocation Pipeline
+
+`OptiAlpha` natively integrates with [`polars-anta`](https://github.com/huuan26/polars-anta) to extract cross-sectional alpha factors from multi-asset Polars OHLCV panels, compute rolling Rank Information Coefficients (`pa.information_coefficient`), estimate dynamic Ledoit-Wolf shrunk covariance matrices, solve FISTA with $`L_1`$ turnover penalties at each rebalance period, and evaluate out-of-sample Newey-West HAC statistics (`pa.ic_summary`):
+
+```python
+from optialpha import (
+    extract_polars_anta_panel_factors,
+    PolarsWalkForwardCombiner,
+)
+
+# 1. Extract MAD-winsorized & z-scored factors + forward returns via polars-anta
+enriched_panel, factor_cols = extract_polars_anta_panel_factors(
+    ohlcv_pl_df,
+    symbol_col="symbol",
+    time_col="timestamp",
+    period=10,
+)
+
+# 2. Run strictly causal walk-forward Ledoit-Wolf + FISTA allocation across time
+wf = PolarsWalkForwardCombiner(
+    lookback=20,
+    risk_aversion=2.0,
+    turnover_penalty=0.05,
+    lower_bound=0.0,
+    upper_bound=0.6,
+    cov_estimator="ledoit_wolf",
+    ic_ema_halflife=10.0,
+)
+result = wf.fit_transform(enriched_panel, factor_cols=factor_cols, return_col="fwd_ret")
+
+print(result.summary())
+print(result.weights_history.tail(5))
+```
+
+---
+
 ## Testing & Verification
 
 Run the full test suite with coverage report:

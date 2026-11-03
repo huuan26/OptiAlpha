@@ -5,7 +5,7 @@ Author: Phan Bùi Hữu Ân (huuan26)
 License: MIT
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # Combination APIs
 from optialpha.combination import (
@@ -55,6 +55,13 @@ from optialpha.data import (
     generate_synthetic_alpha_panel,
 )
 
+# Polars & polars-anta Walk-Forward Pipeline
+from optialpha.walk_forward import (
+    WalkForwardAllocationResult,
+    extract_polars_anta_panel_factors,
+    PolarsWalkForwardCombiner,
+)
+
 __all__ = [
     # Combination
     "equal_weight_combination",
@@ -89,4 +96,8 @@ __all__ = [
     # Data
     "generate_single_period_factors",
     "generate_synthetic_alpha_panel",
+    # Polars Walk-Forward
+    "WalkForwardAllocationResult",
+    "extract_polars_anta_panel_factors",
+    "PolarsWalkForwardCombiner",
 ]
